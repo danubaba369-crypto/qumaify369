@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
         throw new Error('Access denied: Unauthorized admin attempt.')
       }
 
-      router.push('/admin/settings')
+      window.location.href = '/admin/settings'
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message })
     } finally {

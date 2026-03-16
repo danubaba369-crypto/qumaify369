@@ -43,7 +43,7 @@ function LoginContent() {
           password,
         })
         if (error) throw error
-        router.push('/')
+        window.location.href = '/'
       }
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message })
