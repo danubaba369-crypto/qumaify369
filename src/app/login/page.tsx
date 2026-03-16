@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Chrome, Loader2, Lock, LogIn, Eye, EyeOff } from 'lucide-react'
+import { Mail, Chrome, Lock, Loader2, Eye, EyeOff } from "lucide-react"
 import { useSearchParams, useRouter } from 'next/navigation'
 
 function LoginContent() {

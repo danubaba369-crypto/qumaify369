@@ -1,10 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Shield, Globe, Mail, Trash2, Loader2, AlertTriangle } from "lucide-react"
 import { useAuth } from "@/components/providers/AuthProvider"
 import { useRouter } from "next/navigation"
 import { domainService, type DomainRecord } from "@/services/domainService"
+
+interface CustomDomain {
+  id: string;
+  domain_name: string;
+  dns_verified: boolean;
+  user_id: string;
+}
 import { supabase } from "@/lib/supabase"
 
 export default function AdminDomains() {
@@ -12,19 +19,14 @@ export default function AdminDomains() {
   const router = useRouter()
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [allDomains, setAllDomains] = useState<DomainRecord[]>([])
-  const [customDomains, setCustomDomains] = useState<any[]>([])
+  const [customDomains, setCustomDomains] = useState<CustomDomain[]>([])
   const [newCustomDomain, setNewCustomDomain] = useState("")
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [verifying, setVerifying] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!user) return
-    fetchDomainData()
-  }, [user])
-
-  const fetchDomainData = async () => {
+  const fetchDomainData = useCallback(async () => {
     try {
       setLoading(true)
       const [adminList, domains, customList] = await Promise.all([
@@ -53,7 +55,12 @@ export default function AdminDomains() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, router])
+
+  useEffect(() => {
+    if (!user) return
+    fetchDomainData()
+  }, [user, fetchDomainData])
 
   const handleAddCustomDomain = async () => {
     if (!newCustomDomain) return
@@ -62,8 +69,9 @@ export default function AdminDomains() {
       await domainService.addCustomDomain(newCustomDomain)
       setNewCustomDomain("")
       fetchDomainData()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message)
     } finally {
       setIsSaving(false)
     }
@@ -75,8 +83,9 @@ export default function AdminDomains() {
       const res = await domainService.verifyCustomDomain(domainName, force)
       alert(res.message)
       fetchDomainData()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      const error = err as Error;
+      alert(error.message)
     } finally {
       setVerifying(null)
     }
@@ -87,8 +96,9 @@ export default function AdminDomains() {
     try {
       await supabase.from('user_domains').delete().eq('id', id)
       setAllDomains(allDomains.filter(d => d.id !== id))
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message)
     }
   }
 
@@ -132,7 +142,7 @@ export default function AdminDomains() {
           </div>
           
           <div className="glass-panel p-8 rounded-[40px] border border-white/10 space-y-6">
-            <p className="text-xs text-gray-400 font-medium">Link your client's own domain to the Quamify infrastructure.</p>
+            <p className="text-xs text-gray-400 font-medium">Link your client&apos;s own domain to the Quamify infrastructure.</p>
             
             <div className="flex gap-4">
               <input 

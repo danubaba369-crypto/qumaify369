@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         isVerified = true
         reason = "Correct A-Record (76.76.21.21)"
       }
-    } catch (e) {}
+    } catch {}
 
     if (!isVerified) {
       try {
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
           isVerified = true
           reason = "Correct CNAME (cname.vercel-dns.com)"
         }
-      } catch (e) {}
+      } catch {}
     }
 
     if (isVerified) {

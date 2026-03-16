@@ -4,10 +4,8 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Loader2, LogIn, Eye, EyeOff, ShieldAlert } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -42,8 +40,9 @@ export default function AdminLoginPage() {
       }
 
       window.location.href = '/admin/settings'
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message })
+    } catch (error: unknown) {
+      const err = error as Error;
+      setMessage({ type: 'error', text: err.message })
     } finally {
       setLoading(false)
     }

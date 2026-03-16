@@ -28,8 +28,9 @@ export default function AdminProfilePage() {
       if (authError) throw authError
 
       setMessage({ type: 'success', text: 'Verification link sent to ' + email + '. Identity change will finish after you click the link.' })
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message })
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessage({ type: 'error', text: error.message })
     } finally {
       setLoading(false)
     }
@@ -44,8 +45,9 @@ export default function AdminProfilePage() {
       if (error) throw error
       setMessage({ type: 'success', text: 'Password updated successfully.' })
       setPassword('')
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message })
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessage({ type: 'error', text: error.message })
     } finally {
       setLoading(false)
     }
