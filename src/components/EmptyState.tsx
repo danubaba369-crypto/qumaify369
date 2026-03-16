@@ -1,0 +1,73 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Inbox } from "lucide-react";
+
+export default function EmptyState() {
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
+      <motion.div 
+        animate={{ 
+          y: [-10, 10, -10],
+          rotate: [0, 2, -2, 0]
+        }}
+        transition={{ 
+          duration: 6, 
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="relative"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-[--color-brand-pink] to-[--color-brand-orange] blur-3xl opacity-20 rounded-full scale-150"></div>
+        <div className="w-24 h-24 rounded-3xl glass-card flex items-center justify-center relative z-10 border border-white/10">
+          <Inbox className="w-10 h-10 text-[--color-brand-pink] animate-pulse" />
+        </div>
+        
+        {/* Floating Particles */}
+        <motion.div 
+          animate={{ y: [-20, -40], x: [-10, 10], opacity: [0, 1, 0] }}
+          transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+          className="absolute -top-4 -right-4 w-3 h-3 rounded-full bg-[--color-brand-purple] blur-[2px]"
+        />
+        <motion.div 
+          animate={{ y: [0, -30], x: [10, -20], opacity: [0, 1, 0] }}
+          transition={{ duration: 4, repeat: Infinity, delay: 1.2 }}
+          className="absolute top-10 -left-6 w-2 h-2 rounded-full bg-[--color-brand-orange] blur-[1px]"
+        />
+        <motion.div 
+          animate={{ y: [10, -20], x: [0, 15], opacity: [0, 1, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, delay: 2 }}
+          className="absolute bottom-4 -right-8 w-4 h-4 rounded-full bg-[--color-brand-pink] blur-[3px]"
+        />
+      </motion.div>
+      
+      <motion.h3 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mt-8 text-2xl font-semibold text-white tracking-wide"
+      >
+        Awaiting Transmissions
+      </motion.h3>
+      
+      <motion.p 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mt-3 text-gray-400 max-w-sm"
+      >
+        Your temporary inbox is active. Send an email to your address and it will materialize here.
+      </motion.p>
+      
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6, duration: 2 }}
+        className="mt-8 flex items-center space-x-2 text-xs text-gray-500 font-mono uppercase tracking-widest"
+      >
+        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        <span>Listening for incoming signals</span>
+      </motion.div>
+    </div>
+  );
+}
