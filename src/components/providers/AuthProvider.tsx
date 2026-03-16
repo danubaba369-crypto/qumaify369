@@ -36,14 +36,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
       
       if (session?.user) {
-        // Robust admin check
+        const email = session.user.email
+        const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com'
+        
+        if (isHardcodedAdmin) {
+          setIsAdmin(true)
+        }
+
         try {
           const { domainService } = await import('@/services/domainService')
           const adminList = await domainService.listAdmins()
-          const email = session.user.email
-          setIsAdmin(email === 'info369skills@gmail.com' || adminList.includes(email || ""))
+          setIsAdmin(isHardcodedAdmin || adminList.includes(email || ""))
         } catch (e) {
           console.error('Admin check failed:', e)
+          if (isHardcodedAdmin) setIsAdmin(true)
         }
       } else {
         setIsAdmin(false)
@@ -59,11 +65,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
       
       if (session?.user) {
+        const email = session.user.email
+        const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com'
+        
+        if (isHardcodedAdmin) setIsAdmin(true)
+
         try {
           const { domainService } = await import('@/services/domainService')
           const adminList = await domainService.listAdmins()
-          setIsAdmin(session.user.email === 'info369skills@gmail.com' || adminList.includes(session.user.email || ""))
-        } catch (e) {}
+          setIsAdmin(isHardcodedAdmin || adminList.includes(email || ""))
+        } catch (e) {
+          if (isHardcodedAdmin) setIsAdmin(true)
+        }
       } else {
         setIsAdmin(false)
       }

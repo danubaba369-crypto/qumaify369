@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, Globe, Home, LogOut, User as UserIcon, Shield, Menu, X } from "lucide-react";
+import { RefreshCw, Globe, Home, LogOut, User as UserIcon, Shield, Menu, X, ShieldCheck, FileText, Zap, Activity } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePathname } from "next/navigation";
@@ -18,35 +18,55 @@ export default function Header() {
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home, active: isHome },
-    { href: "/domains", label: "Domains", icon: Globe, active: isDomains },
-    ...(isAdmin ? [{ href: "/admin/settings", label: "Settings", icon: Shield, active: pathname === '/admin/settings', isAdmin: true }] : []),
+    { href: "/safety", label: "Safety", icon: ShieldCheck, active: pathname === "/safety" },
+    { href: "/terms", label: "Terms", icon: FileText, active: pathname === "/terms" },
+    ...(isAdmin ? [
+      { href: "/domains", label: "Domains", icon: Globe, active: isDomains },
+      { href: "/admin/settings", label: "Settings", icon: Shield, active: pathname === '/admin/settings', isAdmin: true }
+    ] : []),
   ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 p-4">
-      <div className="max-w-7xl mx-auto glass-panel rounded-2xl p-4 flex items-center justify-between border-[rgba(255,255,255,0.05)] shadow-xl relative z-20">
+      <div className="max-w-7xl mx-auto glass-panel rounded-2xl p-4 flex items-center justify-between border-[rgba(255,255,255,0.05)] shadow-xl relative z-20 scanline-effect">
         {/* Logo Text */}
-        <Link href="/" className="flex items-center shrink-0">
-          <span className="text-xl sm:text-3xl font-black tracking-widest bg-gradient-to-r from-[#7d12ff] via-[#ff12b1] to-[#ff8a12] bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(255,18,177,0.4)] uppercase">
-            Quamify
-          </span>
+        <Link href="/" className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-col">
+            <span className="text-xl sm:text-2xl font-black tracking-widest bg-gradient-to-r from-[#7d12ff] via-[#ff12b1] to-[#ff8a12] bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(255,18,177,0.4)] uppercase">
+              Quamify
+            </span>
+            <span className="text-[8px] font-mono text-gray-500 tracking-[0.3em] ml-0.5 uppercase">v1.2 // Secure</span>
+          </div>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link 
               key={link.href}
               href={link.href} 
-              className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-white ${link.active ? 'text-white' : 'text-gray-400'}`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white/5 ${link.active ? 'text-white bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}
             >
-              <link.icon className={`w-4 h-4 ${link.isAdmin ? 'text-red-500' : ''}`} />
+              <link.icon className={`w-3.5 h-3.5 ${link.isAdmin ? 'text-red-500' : ''}`} />
               {link.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-6">
+          {/* Tech Stats - Desktop Only */}
+          <div className="hidden lg:flex items-center gap-6 border-x border-white/5 px-6 mx-2">
+            <div className="flex flex-col items-start">
+              <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tighter">Nodes</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] text-gray-400 font-mono">ACTIVE</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tighter">Enc</span>
+              <span className="text-[10px] text-gray-400 font-mono">AES-256</span>
+            </div>
+          </div>
           {user ? (
             <div className="flex items-center gap-2 sm:gap-4 sm:pl-4 sm:border-l border-white/10">
               <div className="flex flex-col items-end hidden lg:flex">
@@ -69,6 +89,14 @@ export default function Header() {
               Login
             </Link>
           )}
+
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
       </div>
 
@@ -110,6 +138,7 @@ export default function Header() {
           </motion.div>
         )}
       </AnimatePresence>
+      <div className="absolute bottom-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-brand-pink)]/30 to-transparent"></div>
     </header>
   );
 }
