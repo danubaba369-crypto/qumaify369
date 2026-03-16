@@ -27,23 +27,26 @@ export async function POST(request: Request) {
     // For this demonstration, we'll verify if ANY A or CNAME record exists.
     // In a final handover, we would provide the specific IP/CNAME to the user.
     
+    const VERCEL_IP = "76.76.21.21"
+    const VERCEL_CNAME = "cname.vercel-dns.com"
+    
     let isVerified = false
     let reason = ""
 
     try {
       const aRecords = await dns.resolve4(cleanDomain)
-      if (aRecords.length > 0) {
+      if (aRecords.includes(VERCEL_IP)) {
         isVerified = true
-        reason = "A-Record detected"
+        reason = "Correct A-Record (76.76.21.21)"
       }
     } catch (e) {}
 
     if (!isVerified) {
       try {
         const cnameRecords = await dns.resolveCname(cleanDomain)
-        if (cnameRecords.length > 0) {
+        if (cnameRecords.includes(VERCEL_CNAME)) {
           isVerified = true
-          reason = "CNAME detected"
+          reason = "Correct CNAME (cname.vercel-dns.com)"
         }
       } catch (e) {}
     }
@@ -51,7 +54,7 @@ export async function POST(request: Request) {
     if (isVerified) {
       const { error } = await supabase
         .from('custom_domains')
-        .update({ dns_verified: true })
+        .update({ dns_verified: true, verified_at: new Date().toISOString() })
         .eq('domain_name', cleanDomain)
 
       if (error) throw error
@@ -66,10 +69,11 @@ export async function POST(request: Request) {
         verified: false 
       }, { status: 400 })
     }
-  } catch (error: any) {
-    console.error('Custom DNS Verification Error:', error)
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Custom DNS Verification Error:', err)
     return NextResponse.json({ 
-      message: `Verification failed: ${error.message}`, 
+      message: `Verification failed: ${err.message}`, 
       verified: false 
     }, { status: 500 })
   }

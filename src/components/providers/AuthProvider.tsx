@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { type User, type Session } from '@supabase/supabase-js'
+import { domainService } from '@/services/domainService'
 
 interface AuthContextType {
   user: User | null
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (session?.user) {
         const email = session.user.email
-        const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com'
+        const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com' || email === 'abcd@artradering.com'
         
         // Immediately set admin status for hardcoded admins
         if (isHardcodedAdmin) {
@@ -45,7 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
-          const { domainService } = await import('@/services/domainService')
           const adminList = await domainService.listAdmins()
           setIsAdmin(isHardcodedAdmin || adminList.includes(email || ""))
         } catch (e) {
@@ -68,15 +68,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (session?.user) {
         const email = session.user.email
-        const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com'
+        const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com' || email === 'abcd@artradering.com'
         
         if (isHardcodedAdmin) setIsAdmin(true)
 
         try {
-          const { domainService } = await import('@/services/domainService')
           const adminList = await domainService.listAdmins()
           setIsAdmin(isHardcodedAdmin || adminList.includes(email || ""))
         } catch (e) {
+          console.error('Admin check failed in onAuthStateChange:', e)
           if (isHardcodedAdmin) setIsAdmin(true)
         }
       } else {
@@ -92,8 +92,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase])
 
   const signOut = async () => {
-    await supabase.auth.signOut()
-    window.location.href = '/'
+    try {
+      // 1. Sign out from Supabase
+      await supabase.auth.signOut()
+      
+      // 2. Clear application-specific local state
+      localStorage.removeItem('quamify_active_email')
+      
+      // 3. Clear session storage to ensure no ghost data
+      sessionStorage.clear()
+      
+      // 4. Force a hard redirect to the home page to reset all React state
+      // This is the most definitive way to ensure a fresh state after multiple cycles
+      window.location.href = '/?logout=success'
+    } catch (err) {
+      console.error('Sign out failed:', err)
+      window.location.href = '/'
+    }
   }
 
   return (

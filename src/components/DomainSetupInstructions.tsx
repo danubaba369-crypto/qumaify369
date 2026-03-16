@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { Copy, Check, Info } from 'lucide-react'
 import { useState } from 'react'
 

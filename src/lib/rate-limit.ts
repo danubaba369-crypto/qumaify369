@@ -1,6 +1,3 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
 // Simple in-memory rate limiter for demonstration.
 // In production (especially with Cloudflare Workers), use Cloudflare KV or Upstash Redis.
 const rateLimitMap = new Map<string, { count: number, reset: number }>()

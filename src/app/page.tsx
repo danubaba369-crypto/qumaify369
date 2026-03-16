@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { RefreshCw, Sparkles, Wand2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import HeroAddress from "@/components/HeroAddress";
 import Sidebar from "@/components/Sidebar";
 import EmailViewer from "@/components/EmailViewer";
@@ -24,7 +24,6 @@ function generateRandomString(length: number) {
 export default function Home() {
   const { user } = useAuth();
   const [prefix, setPrefix] = useState<string>("");
-  const [address, setAddress] = useState<string>("");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [verifiedDomains, setVerifiedDomains] = useState<DomainRecord[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string>("artradering.com");
@@ -58,18 +57,17 @@ export default function Home() {
           const newPrefix = generateRandomString(10);
           setPrefix(newPrefix);
           setSelectedDomain(mainDomain);
-          const newAddress = `${newPrefix}@${mainDomain}`;
-          setAddress(newAddress);
-          localStorage.setItem("quamify_active_email", newAddress);
+          localStorage.setItem("quamify_active_email", `${newPrefix}@${mainDomain}`);
           sessionStorage.removeItem("forceNewQuamifyEmail");
           setIsAuto(true);
         } else {
           const [storedPrefix, storedDomain] = storedAddress.split("@");
           setPrefix(storedPrefix);
           setSelectedDomain(storedDomain || mainDomain);
-          setAddress(storedAddress);
           setIsAuto(false);
         }
+        // Fetch verified domains after init
+        await fetchDomains();
       } catch (err) {
         console.error("Domain Init Error:", err);
         setSelectedDomain("artradering.com");
@@ -77,20 +75,19 @@ export default function Home() {
     };
     
     init();
-  }, []);
-
-  useEffect(() => {
-    fetchDomains();
   }, [fetchDomains]);
 
-  // Update address when prefix or domain changes
+  // Derive address from prefix and domain
+  const address = (prefix && selectedDomain && selectedDomain !== "Loading...") 
+    ? `${prefix.toLowerCase().replace(/[^a-z0-9]/g, '')}@${selectedDomain}`
+    : "";
+
+  // Update localStorage when address changes
   useEffect(() => {
-    if (prefix && selectedDomain && selectedDomain !== "Loading...") {
-      const newAddress = `${prefix.toLowerCase().replace(/[^a-z0-9]/g, '')}@${selectedDomain}`;
-      setAddress(newAddress);
-      localStorage.setItem("quamify_active_email", newAddress);
+    if (address) {
+      localStorage.setItem("quamify_active_email", address);
     }
-  }, [prefix, selectedDomain]);
+  }, [address]);
 
   const { emails, isLoading } = useEmails(address);
   const selectedEmail = emails.find((e) => e.id === selectedEmailId) || null;

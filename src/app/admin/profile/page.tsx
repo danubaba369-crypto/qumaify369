@@ -74,7 +74,8 @@ export default function AdminProfilePage() {
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">New Email Address</label>
               <input 
-                type="email" 
+                type="email"
+                placeholder="Quamify's administration"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

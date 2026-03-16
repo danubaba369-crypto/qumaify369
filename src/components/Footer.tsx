@@ -24,7 +24,8 @@ export default function Footer() {
         
         <div className="text-center space-y-2">
           <p className="text-sm font-black tracking-widest text-white/40 uppercase">
-            &copy; {new Date().getFullYear()} {copyright}
+            {!copyright.includes("©") && !copyright.includes("&copy;") && <span>&copy; {new Date().getFullYear()} </span>}
+            {copyright}
           </p>
           <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
             Handcrafted with precision by{" "}

@@ -60,10 +60,11 @@ export async function POST(request: Request) {
         verified: false 
       }, { status: 400 })
     }
-  } catch (error: any) {
-    console.error('DNS Lookup Error:', error)
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Verification Error:', err)
     return NextResponse.json({ 
-      message: `DNS lookup failed: ${error.message}. Ensure the domain exists and records are set.`, 
+      message: `Verification failed: ${err.message}`, 
       verified: false 
     }, { status: 500 })
   }

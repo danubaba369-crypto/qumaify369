@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Chrome, Loader2, Lock, UserPlus, LogIn, Eye, EyeOff } from 'lucide-react'
+import { Mail, Chrome, Loader2, Lock, LogIn, Eye, EyeOff } from 'lucide-react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
 function LoginContent() {
@@ -43,10 +43,17 @@ function LoginContent() {
           password,
         })
         if (error) throw error
-        window.location.href = '/'
+        
+        // Force session refresh and wait a bit for state to propagate
+        await supabase.auth.getSession()
+        router.refresh()
+        setTimeout(() => {
+          window.location.href = '/?auth=success'
+        }, 500)
       }
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.message })
+    } catch (error: unknown) {
+      const err = error as Error;
+      setMessage({ type: 'error', text: err.message })
     } finally {
       setLoading(false)
     }
@@ -148,7 +155,7 @@ function LoginContent() {
               {isSignUp ? (
                 <>Already have an account? <span className="text-[var(--color-brand-pink)] font-bold">Sign In</span></>
               ) : (
-                <>Don't have an account? <span className="text-[var(--color-brand-pink)] font-bold">Sign Up</span></>
+                <>Don&apos;t have an account? <span className="text-[var(--color-brand-pink)] font-bold">Sign Up</span></>
               )}
             </button>
           </div>

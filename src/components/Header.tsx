@@ -1,13 +1,13 @@
 "use client";
 
-import { RefreshCw, Globe, Home, LogOut, User as UserIcon, Shield, Menu, X, ShieldCheck, FileText, Zap, Activity } from "lucide-react";
+import { Globe, Home, LogOut, Shield, Menu, X, ShieldCheck, FileText } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-export default function Header() {
+function HeaderContent() {
   const { user, signOut, isAdmin } = useAuth();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -25,15 +25,13 @@ export default function Header() {
   }, [searchParams, router]);
 
   const isHome = pathname === "/";
-  const isDomains = pathname === "/domains";
-  const isAdminPage = pathname?.startsWith('/admin');
 
   const navLinks = [
     { href: "/", label: "Home", icon: Home, active: isHome },
     { href: "/safety", label: "Safety", icon: ShieldCheck, active: pathname === "/safety" },
     { href: "/terms", label: "Terms", icon: FileText, active: pathname === "/terms" },
     ...(isAdmin ? [
-      { href: "/admin/settings", label: "Domains", icon: Globe, active: pathname === '/admin/settings' },
+      { href: "/admin/domains", label: "Domains", icon: Globe, active: pathname === '/admin/domains' },
       { href: "/admin/settings", label: "Settings", icon: Shield, active: pathname === '/admin/settings', isAdmin: true }
     ] : []),
   ];
@@ -52,9 +50,9 @@ export default function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
+          {navLinks.map((link, idx) => (
             <Link 
-              key={link.href}
+              key={`${link.href}-${idx}`}
               href={link.href} 
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white/5 ${link.active ? 'text-white bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}
             >
@@ -122,9 +120,9 @@ export default function Header() {
             className="absolute top-full left-4 right-4 mt-2 md:hidden z-10"
           >
             <div className="glass-panel rounded-2xl p-4 space-y-2 border-[rgba(255,255,255,0.05)] shadow-2xl">
-              {navLinks.map((link) => (
+              {navLinks.map((link, idx) => (
                 <Link 
-                  key={link.href}
+                  key={`${link.href}-mobile-${idx}`}
                   href={link.href} 
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center gap-3 p-3 rounded-xl transition-all ${link.active ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
@@ -153,4 +151,12 @@ export default function Header() {
       <div className="absolute bottom-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-[var(--color-brand-pink)]/30 to-transparent"></div>
     </header>
   );
+}
+
+export default function Header() {
+  return (
+    <Suspense fallback={null}>
+      <HeaderContent />
+    </Suspense>
+  )
 }
