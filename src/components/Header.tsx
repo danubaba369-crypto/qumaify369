@@ -49,21 +49,6 @@ export default function Header() {
         <div className="flex items-center gap-2 sm:gap-4">
           {isHome && (
             <button 
-              className="relative px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-medium text-white transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] hidden xs:block"
-              onClick={() => {
-                sessionStorage.setItem("forceNewQuamifyEmail", "true");
-                window.location.reload();
-              }}
-            >
-              <div className="absolute inset-0 bg-transparent rounded-full border border-transparent holo-border z-0"></div>
-              <div className="relative z-10 flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 text-[#ff12b1]" />
-                <span className="hidden sm:inline">Generate New</span>
-                <span className="sm:hidden text-xs">New</span>
-              </div>
-            </button>
-          )}
-
           {user ? (
             <div className="flex items-center gap-2 sm:gap-4 sm:pl-4 sm:border-l border-white/10">
               <div className="flex flex-col items-end hidden lg:flex">

@@ -122,7 +122,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-120px)] w-full max-w-7xl mx-auto space-y-6 flex-1 px-4 sm:px-0">
-      <div className="space-y-6">
+      <div className="flex-1 flex flex-col items-center justify-start py-8 sm:py-16">
         <HeroAddress 
           emailAddress={address} 
           prefix={prefix}

@@ -54,19 +54,19 @@ export default function HeroAddress({
           
           <div className="flex flex-col gap-8 w-full relative z-10">
             {/* Main Interactive Address Input */}
-            <div className="flex flex-col sm:flex-row items-center gap-2 bg-black/60 border border-white/10 rounded-3xl p-2 pl-6 shadow-2xl focus-within:border-[var(--color-brand-pink)]/50 transition-all">
-              <input 
+            <div className={`flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 w-full p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] bg-white/[0.03] border border-white/5 group-hover:border-white/10 transition-all mb-8`}>
+              <input
                 type="text"
                 value={prefix}
                 onChange={(e) => onPrefixChange(e.target.value)}
-                className="flex-1 bg-transparent text-xl sm:text-3xl font-black text-white outline-none min-w-0"
+                className="w-full sm:flex-1 bg-transparent text-2xl sm:text-3xl font-black text-white outline-none min-w-0 text-center sm:text-left"
                 placeholder="prefix"
               />
-              <span className="text-2xl text-gray-600 font-light">@</span>
+              <span className="text-2xl text-gray-600 font-light my-1 sm:my-0">@</span>
               <select 
                 value={selectedDomain}
                 onChange={(e) => onDomainChange(e.target.value)}
-                className="bg-white/5 hover:bg-white/10 text-sm sm:text-lg font-bold text-gray-300 px-3 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl outline-none cursor-pointer appearance-none transition-all"
+                className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-base sm:text-lg font-bold text-gray-300 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl outline-none cursor-pointer appearance-none transition-all text-center sm:text-left"
               >
                 {/* Always show the currently selected domain as the primary option */}
                 <option value={selectedDomain} className="bg-[#050505]">{selectedDomain}</option>
@@ -81,7 +81,7 @@ export default function HeroAddress({
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 w-full">
               <button
                 onClick={onAutoGenerate}
-                className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 sm:py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
                   isAuto 
                     ? "bg-[var(--color-brand-pink)] text-white shadow-[0_0_20px_var(--color-brand-pink)]/40" 
                     : "bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5"
@@ -94,7 +94,7 @@ export default function HeroAddress({
               <button
                 onClick={handleCopy}
                 disabled={!emailAddress}
-                className={`flex-1 flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${
+                className={`w-full sm:flex-1 flex items-center justify-center gap-3 px-8 py-4 sm:py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${
                   copied 
                     ? "bg-green-500 text-white shadow-[0_0_30px_rgba(34,197,94,0.5)]" 
                     : "bg-white text-black hover:shadow-[0_0_30px_rgba(255,18,177,0.3)] hover:scale-[1.02] active:scale-95 disabled:opacity-50"
@@ -106,14 +106,15 @@ export default function HeroAddress({
             </div>
           </div>
           
-          <div className="mt-8 flex items-center gap-6 opacity-40">
-            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg">
+          <div className="mt-8 pt-8 border-t border-white/5 flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
               <Globe className="w-3 h-3" />
-              <span className="text-[10px] font-mono tracking-tighter uppercase">{selectedDomain}</span>
+              {selectedDomain}
             </div>
-            <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg">
-              <Sparkles className="w-3 h-3" />
-              <span className="text-[10px] font-mono tracking-tighter uppercase">SSL/Holo-Encrypted</span>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500">
+              <Zap className="w-3 h-3 text-[var(--color-brand-orange)]" />
+              SSL/HOLO-ENCRYPTED
             </div>
           </div>
         </div>
