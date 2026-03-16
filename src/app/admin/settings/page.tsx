@@ -179,17 +179,17 @@ export default function AdminSettings() {
     <div className="max-w-7xl mx-auto py-12 px-4 space-y-12">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="p-4 rounded-3xl bg-red-500/10 border border-red-500/20">
-            <Shield className="w-8 h-8 text-red-500" />
+          <div className="p-3 sm:p-4 rounded-3xl bg-red-500/10 border border-red-500/20">
+            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-red-500" />
           </div>
           <div>
-            <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Admin Control Center</h1>
-            <p className="text-gray-500 font-bold uppercase text-xs tracking-widest">Global holographic infrastructure management</p>
+            <h1 className="text-2xl sm:text-4xl font-black text-white uppercase tracking-tighter">Admin Control Center</h1>
+            <p className="text-[8px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest">Global holographic infrastructure management</p>
           </div>
         </div>
         <button 
            onClick={() => router.push('/admin/profile')}
-           className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+           className="hidden sm:block px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
         >
             Security Profile
         </button>
@@ -210,7 +210,7 @@ export default function AdminSettings() {
             <h2 className="text-xl font-black text-white uppercase tracking-widest">System Parameters</h2>
           </div>
 
-          <div className="glass-panel p-8 rounded-[40px] border border-white/10 space-y-8">
+          <div className="glass-panel p-4 sm:p-8 rounded-[30px] sm:rounded-[40px] border border-white/10 space-y-6 sm:space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">Main System Domain</label>
@@ -298,7 +298,7 @@ export default function AdminSettings() {
               <h2 className="text-xl font-black text-white uppercase tracking-widest">Custom Branding Domain</h2>
             </div>
             
-            <div className="glass-panel p-8 rounded-[40px] border border-white/10 space-y-6">
+            <div className="glass-panel p-4 sm:p-8 rounded-[30px] sm:rounded-[40px] border border-white/10 space-y-6">
               <p className="text-xs text-gray-400 font-medium">Link your client's own domain to the Quamify infrastructure.</p>
               
               <div className="flex gap-4">
@@ -312,7 +312,7 @@ export default function AdminSettings() {
                 <button 
                   onClick={handleAddCustomDomain}
                   disabled={isSaving || !newCustomDomain}
-                  className="px-8 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all disabled:opacity-50"
+                  className="px-4 sm:px-8 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all disabled:opacity-50"
                 >
                   Register
                 </button>

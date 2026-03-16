@@ -32,14 +32,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-[var(--color-brand-pink)] selection:text-white bg-[#050505] min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#050505] text-white pt-24 min-h-screen flex flex-col`}
       >
         <AuthProvider>
           <div className="flex-1 flex flex-col pt-24 relative z-10">
             <Header />
-            <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto space-y-6 px-4 md:px-8">
+            <div className="flex flex-col h-[calc(100vh-140px)] w-full max-w-7xl mx-auto space-y-6 flex-1 px-4 sm:px-0">
               {children}
-            </main>
+            </div>
             <Footer />
           </div>
         </AuthProvider>

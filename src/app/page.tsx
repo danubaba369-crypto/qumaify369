@@ -27,14 +27,18 @@ export default function Home() {
   const [address, setAddress] = useState<string>("");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [verifiedDomains, setVerifiedDomains] = useState<DomainRecord[]>([]);
-  const [selectedDomain, setSelectedDomain] = useState<string>("Loading...");
+  const [selectedDomain, setSelectedDomain] = useState<string>("artradering.com");
   const [isAuto, setIsAuto] = useState(true);
 
   const fetchDomains = useCallback(async () => {
     if (!user) return;
     try {
       const domains = await domainService.listDomains();
-      setVerifiedDomains(domains.filter(d => d.is_verified));
+      const verified = domains.filter(d => d.is_verified);
+      setVerifiedDomains(verified);
+      
+      // If we have verified domains and currently only using the default, 
+      // maybe switch to the first verified domain if needed.
     } catch (err) {
       console.error("Fetch Domains Error:", err);
     }
@@ -62,7 +66,7 @@ export default function Home() {
         } else {
           const [storedPrefix, storedDomain] = storedAddress.split("@");
           setPrefix(storedPrefix);
-          setSelectedDomain(storedDomain);
+          setSelectedDomain(storedDomain || mainDomain);
           setAddress(storedAddress);
           setIsAuto(false);
         }

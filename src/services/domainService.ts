@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase'
 
 export interface DomainRecord {
   id: string
@@ -11,8 +11,6 @@ export interface DomainRecord {
 
 export const domainService = {
   async addDomain(domainName: string) {
-    const supabase = createClient()
-    
     // Clean domain name: remove https://, http://, and trailing slashes
     const cleanDomain = domainName
       .toLowerCase()
@@ -21,7 +19,9 @@ export const domainService = {
       .split('/')[0] // handle potential paths
 
     const verificationToken = `quamify-verify-${Math.random().toString(36).substring(2, 15)}`
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+    
     if (!user) {
       console.error('AddDomain Error: No active session found')
       throw new Error('You must be logged in to add a domain')
@@ -47,7 +47,6 @@ export const domainService = {
   },
 
   async getSettings() {
-    const supabase = createClient()
     const { data } = await supabase.from('site_settings').select('*')
     const settings: Record<string, string> = {}
     data?.forEach(s => settings[s.key] = s.value)
@@ -55,7 +54,6 @@ export const domainService = {
   },
 
   async updateSetting(key: string, value: string) {
-    const supabase = createClient()
     const { error } = await supabase
       .from('site_settings')
       .upsert({ key, value, updated_at: new Date().toISOString() })
@@ -63,25 +61,21 @@ export const domainService = {
   },
 
   async addAdmin(email: string) {
-    const supabase = createClient()
     const { error } = await supabase.from('admins').upsert({ email })
     if (error) throw error
   },
 
   async removeAdmin(email: string) {
-    const supabase = createClient()
     const { error } = await supabase.from('admins').delete().eq('email', email)
     if (error) throw error
   },
 
   async listAdmins() {
-    const supabase = createClient()
     const { data } = await supabase.from('admins').select('email')
     return data?.map(a => a.email) || []
   },
 
   async getStats() {
-    const supabase = createClient()
     
     // Get total domains count
     const { count: domainsCount } = await supabase
@@ -107,7 +101,6 @@ export const domainService = {
   },
 
   async listDomains() {
-    const supabase = createClient()
     const { data, error } = await supabase
       .from('user_domains')
       .select('*')
@@ -118,7 +111,6 @@ export const domainService = {
   },
 
   async deleteDomain(id: string) {
-    const supabase = createClient()
     const { error } = await supabase
       .from('user_domains')
       .delete()
@@ -128,15 +120,14 @@ export const domainService = {
   },
 
   async getCustomDomains() {
-    const supabase = createClient()
     const { data, error } = await supabase.from('custom_domains').select('*')
     if (error) throw error
     return data
   },
 
   async addCustomDomain(domainName: string) {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) throw new Error('Not authenticated')
     
     const { data, error } = await supabase
