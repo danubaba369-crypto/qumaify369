@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Wand2, Sparkles, Globe } from "lucide-react";
+import { Wand2, Copy, Check, Globe, Sparkles, Zap } from 'lucide-react';
 import { motion } from "framer-motion";
 
 interface HeroAddressProps {

@@ -47,8 +47,6 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          {isHome && (
-            <button 
           {user ? (
             <div className="flex items-center gap-2 sm:gap-4 sm:pl-4 sm:border-l border-white/10">
               <div className="flex flex-col items-end hidden lg:flex">
@@ -71,14 +69,6 @@ export default function Header() {
               Login
             </Link>
           )}
-
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
       </div>
 
