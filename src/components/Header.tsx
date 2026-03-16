@@ -3,14 +3,26 @@
 import { RefreshCw, Globe, Home, LogOut, User as UserIcon, Shield, Menu, X, ShieldCheck, FileText, Zap, Activity } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Header() {
   const { user, signOut, isAdmin } = useAuth();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Auto-refresh when auth succeeds to sync state
+  useEffect(() => {
+    if (searchParams.get('auth') === 'success') {
+      router.refresh();
+      // Clean up URL
+      const newPath = window.location.pathname;
+      window.history.replaceState({}, '', newPath);
+    }
+  }, [searchParams, router]);
 
   const isHome = pathname === "/";
   const isDomains = pathname === "/domains";
@@ -21,7 +33,7 @@ export default function Header() {
     { href: "/safety", label: "Safety", icon: ShieldCheck, active: pathname === "/safety" },
     { href: "/terms", label: "Terms", icon: FileText, active: pathname === "/terms" },
     ...(isAdmin ? [
-      { href: "/domains", label: "Domains", icon: Globe, active: isDomains },
+      { href: "/admin/settings", label: "Domains", icon: Globe, active: pathname === '/admin/settings' },
       { href: "/admin/settings", label: "Settings", icon: Shield, active: pathname === '/admin/settings', isAdmin: true }
     ] : []),
   ];

@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const email = session.user.email
         const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com'
         
+        // Immediately set admin status for hardcoded admins
         if (isHardcodedAdmin) {
           setIsAdmin(true)
         }
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsAdmin(isHardcodedAdmin || adminList.includes(email || ""))
         } catch (e) {
           console.error('Admin check failed:', e)
+          // Fallback to hardcoded check if DB fails
           if (isHardcodedAdmin) setIsAdmin(true)
         }
       } else {
