@@ -1,7 +1,6 @@
-# New Decoupled Structure
-frontend/.next/
-frontend/node_modules/
-frontend/.env.local
+# Local env files
+.env.local
+.env.*.local
 
 # Original/Root (for safety)
 .next/
