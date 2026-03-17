@@ -71,9 +71,21 @@ DROP POLICY IF EXISTS "Admins manage settings" ON public.site_settings;
 CREATE POLICY "Admins manage settings" ON public.site_settings FOR ALL 
     USING (auth.jwt() ->> 'email' = 'info369skills@gmail.com' OR EXISTS (SELECT 1 FROM admins WHERE email = auth.jwt() ->> 'email'));
 
-DROP POLICY IF EXISTS "Admins manage admins" ON public.admins;
-CREATE POLICY "Admins manage admins" ON public.admins FOR INSERT, UPDATE, DELETE 
-    WITH CHECK (auth.jwt() ->> 'email' = 'info369skills@gmail.com' OR auth.jwt() ->> 'email' IN (SELECT email FROM admins));
+-- Admin Management Policies (Split to avoid syntax error)
+DROP POLICY IF EXISTS "Admins insert admins" ON public.admins;
+CREATE POLICY "Admins insert admins" ON public.admins FOR INSERT WITH CHECK (
+    auth.jwt() ->> 'email' = 'info369skills@gmail.com' OR auth.jwt() ->> 'email' IN (SELECT email FROM admins)
+);
+
+DROP POLICY IF EXISTS "Admins update admins" ON public.admins;
+CREATE POLICY "Admins update admins" ON public.admins FOR UPDATE USING (
+    auth.jwt() ->> 'email' = 'info369skills@gmail.com' OR auth.jwt() ->> 'email' IN (SELECT email FROM admins)
+);
+
+DROP POLICY IF EXISTS "Admins delete admins" ON public.admins;
+CREATE POLICY "Admins delete admins" ON public.admins FOR DELETE USING (
+    auth.jwt() ->> 'email' = 'info369skills@gmail.com' OR auth.jwt() ->> 'email' IN (SELECT email FROM admins)
+);
 
 DROP POLICY IF EXISTS "Admins manage custom_domains" ON public.custom_domains;
 CREATE POLICY "Admins manage custom_domains" ON public.custom_domains FOR ALL 
