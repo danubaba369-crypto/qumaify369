@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { type User, type Session } from '@supabase/supabase-js'
 import { domainService } from '@/services/domainService'
@@ -8,7 +8,7 @@ import { domainService } from '@/services/domainService'
 interface AuthContextType {
   user: User | null
   session: Session | null
-  isAdmin: boolean
+  isAdmin: boolean | null
   isLoading: boolean
   signOut: () => Promise<void>
 }
@@ -16,7 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
-  isAdmin: false,
+  isAdmin: null,
   isLoading: true,
   signOut: async () => {},
 })
@@ -24,62 +24,68 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+
+  // Memoize supabase client to prevent recreation on every render
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
-    const setData = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      if (error) console.error('Error getting session:', error)
-      
-      setSession(session)
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        const email = session.user.email
-        const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com' || email === 'abcd@artradering.com'
-        
-        // Immediately set admin status for hardcoded admins
-        if (isHardcodedAdmin) {
-          setIsAdmin(true)
-        }
+    let mounted = true;
 
-        try {
-          const adminList = await domainService.listAdmins()
-          setIsAdmin(isHardcodedAdmin || adminList.includes(email || ""))
-        } catch (e) {
-          console.error('Admin check failed:', e)
-          // Fallback to hardcoded check if DB fails
-          if (isHardcodedAdmin) setIsAdmin(true)
-        }
-      } else {
-        setIsAdmin(false)
-      }
+    const checkAdminStatus = async (userEmail: string | undefined) => {
+      if (!userEmail) return false;
+      const isHardcodedAdmin = userEmail === 'info369skills@gmail.com' || userEmail === 'danubaba369@gmail.com' || userEmail === 'abcd@artradering.com'
+      if (isHardcodedAdmin) return true;
       
-      setIsLoading(false)
+      try {
+        const adminList = await domainService.listAdmins()
+        return adminList.includes(userEmail)
+      } catch (e) {
+        console.error('Admin check failed:', e)
+        return isHardcodedAdmin;
+      }
+    };
+
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) throw error
+        
+        if (mounted) {
+          setSession(session)
+          setUser(session?.user ?? null)
+          setIsLoading(false)
+
+          if (session?.user) {
+            const adminStatus = await checkAdminStatus(session.user.email)
+            if (mounted) setIsAdmin(adminStatus)
+          } else {
+            setIsAdmin(false)
+          }
+        }
+      } catch (e) {
+        console.error('Initial state check failed:', e)
+        if (mounted) {
+          setIsAdmin(false)
+          setIsLoading(false)
+        }
+      }
     }
 
-    setData()
+    initializeAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        const email = session.user.email
-        const isHardcodedAdmin = email === 'info369skills@gmail.com' || email === 'danubaba369@gmail.com' || email === 'abcd@artradering.com'
-        
-        if (isHardcodedAdmin) setIsAdmin(true)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if (!mounted) return;
 
-        try {
-          const adminList = await domainService.listAdmins()
-          setIsAdmin(isHardcodedAdmin || adminList.includes(email || ""))
-        } catch (e) {
-          console.error('Admin check failed in onAuthStateChange:', e)
-          if (isHardcodedAdmin) setIsAdmin(true)
-        }
-      } else {
+      setSession(currentSession)
+      setUser(currentSession?.user ?? null)
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && currentSession)) {
+        setIsAdmin(null) // Checking...
+        const adminStatus = await checkAdminStatus(currentSession?.user?.email)
+        if (mounted) setIsAdmin(adminStatus)
+      } else if (event === 'SIGNED_OUT') {
         setIsAdmin(false)
       }
       
@@ -87,24 +93,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => {
+      mounted = false;
       subscription.unsubscribe()
     }
   }, [supabase])
 
   const signOut = async () => {
     try {
-      // 1. Sign out from Supabase
+      setIsLoading(true)
       await supabase.auth.signOut()
-      
-      // 2. Clear application-specific local state
-      localStorage.removeItem('quamify_active_email')
-      
-      // 3. Clear session storage to ensure no ghost data
+      localStorage.clear()
       sessionStorage.clear()
-      
-      // 4. Force a hard redirect to the home page to reset all React state
-      // This is the most definitive way to ensure a fresh state after multiple cycles
-      window.location.href = '/?logout=success'
+      // Clear cookies for double insurance
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      window.location.href = '/'
     } catch (err) {
       console.error('Sign out failed:', err)
       window.location.href = '/'

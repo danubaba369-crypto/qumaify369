@@ -3,69 +3,79 @@ import { createClient } from '@/lib/supabase/server'
 import dns from 'dns/promises'
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const { domain, force } = await request.json()
-
-  if (!domain) {
-    return NextResponse.json({ message: 'Domain name is required' }, { status: 400 })
-  }
-
   try {
-    const cleanDomain = domain.toLowerCase().trim()
-    
-    if (force) {
-      const { error } = await supabase
-        .from('custom_domains')
-        .update({ dns_verified: true })
-        .eq('domain_name', cleanDomain)
+    const supabase = await createClient()
+    const { domain } = await request.json()
 
-      if (error) throw error
-      return NextResponse.json({ message: 'Domain force-verified successfully!', verified: true })
+    if (!domain) {
+      return NextResponse.json({ message: 'Domain name is required' }, { status: 400 })
     }
+
+    const cleanDomain = domain.toLowerCase().trim()
     
     // In a real production app, you'd check against your specific IP or CNAME.
     // For this demonstration, we'll verify if ANY A or CNAME record exists.
-    // In a final handover, we would provide the specific IP/CNAME to the user.
     
     const VERCEL_IP = "76.76.21.21"
     const VERCEL_CNAME = "cname.vercel-dns.com"
+    const QUAMIFY_CNAME = "cname.quamify-mail.com"
+    const QUAMIFY_MX1 = "mx1.quamify-mail.com"
+    const QUAMIFY_MX2 = "mx2.quamify-mail.com"
     
     let isVerified = false
     let reason = ""
 
+    // 1. Check A Record
     try {
       const aRecords = await dns.resolve4(cleanDomain)
       if (aRecords.includes(VERCEL_IP)) {
         isVerified = true
-        reason = "Correct A-Record (76.76.21.21)"
+        reason = "A-Record detected"
       }
     } catch {}
 
+    // 2. Check CNAME (especially for subdomains)
     if (!isVerified) {
       try {
         const cnameRecords = await dns.resolveCname(cleanDomain)
-        if (cnameRecords.includes(VERCEL_CNAME)) {
+        if (cnameRecords.includes(VERCEL_CNAME) || cnameRecords.includes(QUAMIFY_CNAME)) {
           isVerified = true
-          reason = "Correct CNAME (cname.vercel-dns.com)"
+          reason = "CNAME detected"
+        }
+      } catch {}
+    }
+
+    // 3. Check MX Records (Crucial for Mail)
+    if (!isVerified) {
+      try {
+        const mxRecords = await dns.resolveMx(cleanDomain)
+        const hasMX = mxRecords.some(mx => 
+          mx.exchange.includes(QUAMIFY_MX1) || 
+          mx.exchange.includes(QUAMIFY_MX2)
+        )
+        if (hasMX) {
+          isVerified = true
+          reason = "MX Records detected"
         }
       } catch {}
     }
 
     if (isVerified) {
+      // Update the user_domains table (not custom_domains which doesn't exist/old)
       const { error } = await supabase
-        .from('custom_domains')
-        .update({ dns_verified: true, verified_at: new Date().toISOString() })
+        .from('user_domains')
+        .update({ is_verified: true, verified_at: new Date().toISOString() })
         .eq('domain_name', cleanDomain)
 
       if (error) throw error
 
       return NextResponse.json({ 
-        message: `Successfully verified via ${reason}!`, 
+        message: `Verification Successful via ${reason}! Domain is now active.`, 
         verified: true 
       })
     } else {
       return NextResponse.json({ 
-        message: 'No DNS records detected. Please ensure your A or CNAME record is configured correctly.', 
+        message: 'DNS records not propagated yet. Please ensure A, CNAME, or MX records are set correctly.', 
         verified: false 
       }, { status: 400 })
     }

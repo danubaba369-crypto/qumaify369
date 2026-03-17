@@ -15,18 +15,22 @@ CREATE TABLE IF NOT EXISTS user_domains (
 ALTER TABLE user_domains ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Users can view their own domains" ON user_domains;
 CREATE POLICY "Users can view their own domains" 
     ON user_domains FOR SELECT 
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own domains" ON user_domains;
 CREATE POLICY "Users can insert their own domains" 
     ON user_domains FOR INSERT 
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own domains" ON user_domains;
 CREATE POLICY "Users can delete their own domains" 
     ON user_domains FOR DELETE 
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own domains" ON user_domains;
 CREATE POLICY "Users can update their own domains" 
     ON user_domains FOR UPDATE USING (auth.uid() = user_id);
 
@@ -56,20 +60,27 @@ ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.custom_domains ENABLE ROW LEVEL SECURITY;
 
 -- Global Read Access
+DROP POLICY IF EXISTS "Public read site_settings" ON public.site_settings;
 CREATE POLICY "Public read site_settings" ON public.site_settings FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public read admins" ON public.admins;
 CREATE POLICY "Public read admins" ON public.admins FOR SELECT USING (true);
 
 -- Admin Management
+DROP POLICY IF EXISTS "Admins manage settings" ON public.site_settings;
 CREATE POLICY "Admins manage settings" ON public.site_settings FOR ALL 
     USING (auth.jwt() ->> 'email' = 'info369skills@gmail.com' OR EXISTS (SELECT 1 FROM admins WHERE email = auth.jwt() ->> 'email'));
 
+DROP POLICY IF EXISTS "Admins manage admins" ON public.admins;
 CREATE POLICY "Admins manage admins" ON public.admins FOR ALL 
     USING (auth.jwt() ->> 'email' = 'info369skills@gmail.com' OR auth.jwt() ->> 'email' IN (SELECT email FROM admins));
 
+DROP POLICY IF EXISTS "Admins manage custom_domains" ON public.custom_domains;
 CREATE POLICY "Admins manage custom_domains" ON public.custom_domains FOR ALL 
     USING (auth.jwt() ->> 'email' = 'info369skills@gmail.com' OR EXISTS (SELECT 1 FROM admins WHERE email = auth.jwt() ->> 'email'));
 
 -- User Custom Domains
+DROP POLICY IF EXISTS "Users view own custom_domains" ON public.custom_domains;
 CREATE POLICY "Users view own custom_domains" ON public.custom_domains FOR SELECT 
     USING (auth.uid() = user_id);
 
@@ -77,12 +88,12 @@ CREATE POLICY "Users view own custom_domains" ON public.custom_domains FOR SELEC
 NOTIFY pgrst, 'reload schema';
 
 -- Initial records
-INSERT INTO admins (email) VALUES ('info369skills@gmail.com');
-INSERT INTO site_settings (key, value) VALUES ('main_domain', 'quamify-mail.vercel.app');
-INSERT INTO site_settings (key, value) VALUES ('support_email', 'support@369aiventures.com');
-INSERT INTO site_settings (key, value) VALUES ('copyright_text', 'Quamify. All Rights Reserved.');
-INSERT INTO site_settings (key, value) VALUES ('terms_content', 'By accessing and using Quamify Mail, you agree to be bound by these terms. This service provides temporary holographic email addresses for testing and privacy purposes.');
-INSERT INTO site_settings (key, value) VALUES ('safety_clause_content', 'Quamify ka structure third-party providers (Vercel, Supabase, Cloudflare) par depend karta hai. In platforms ki policies, free-tier limits, ya uptime humare control mein nahi hain.');
+INSERT INTO admins (email) VALUES ('info369skills@gmail.com') ON CONFLICT DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('main_domain', 'quamify-mail.vercel.app') ON CONFLICT DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('support_email', 'support@369aiventures.com') ON CONFLICT DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('copyright_text', 'Quamify. All Rights Reserved.') ON CONFLICT DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('terms_content', 'By accessing and using Quamify Mail, you agree to be bound by these terms. This service provides temporary holographic email addresses for testing and privacy purposes.') ON CONFLICT DO NOTHING;
+INSERT INTO site_settings (key, value) VALUES ('safety_clause_content', 'Quamify ka structure third-party providers (Vercel, Supabase, Cloudflare) par depend karta hai. In platforms ki policies, free-tier limits, ya uptime humare control mein nahi hain.') ON CONFLICT DO NOTHING;
 
 -- 2. Domain Limit Trigger (9 Domains Max)
 CREATE OR REPLACE FUNCTION check_domain_limit() RETURNS TRIGGER AS $$
@@ -94,16 +105,44 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tg_check_domain_limit ON user_domains;
 CREATE TRIGGER tg_check_domain_limit
 BEFORE INSERT ON user_domains
 FOR EACH ROW EXECUTE FUNCTION check_domain_limit();
 
--- 3. High-Concurrency Indexes for Emails
--- Assuming public.emails exists based on user's previous code
+-- 3. Emails Table (The core of the inbox)
+CREATE TABLE IF NOT EXISTS public.emails (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender TEXT NOT NULL,
+    subject TEXT,
+    recipient_address TEXT NOT NULL,
+    body_text TEXT,
+    body_html TEXT,
+    received_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable RLS for Emails
+ALTER TABLE public.emails ENABLE ROW LEVEL SECURITY;
+
+-- High-Concurrency Indexes
 CREATE INDEX IF NOT EXISTS idx_emails_recipient_address ON public.emails (recipient_address);
 CREATE INDEX IF NOT EXISTS idx_emails_received_at ON public.emails (received_at DESC);
 
--- 4. Rate Limiting Table (Optional but recommended for Cloudflare Workers interaction)
+-- Email Access Policy: Users can only see emails for domains they own and have verified
+DROP POLICY IF EXISTS "Users can view emails for their domains" ON public.emails;
+CREATE POLICY "Users can view emails for their domains" 
+    ON public.emails FOR SELECT 
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_domains 
+            WHERE user_domains.user_id = auth.uid() 
+            AND public.emails.recipient_address LIKE ('%@' || user_domains.domain_name)
+        )
+        OR 
+        public.emails.recipient_address LIKE '%@quamify-mail.com' -- Allow platform default viewing for everyone
+    );
+
+-- 4. Rate Limiting Table
 CREATE TABLE IF NOT EXISTS rate_limits (
     key TEXT PRIMARY KEY,
     hits INTEGER DEFAULT 1,

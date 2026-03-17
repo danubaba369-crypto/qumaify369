@@ -7,8 +7,6 @@ import { useRouter } from "next/navigation"
 import { domainService } from "@/services/domainService"
 
 interface SystemSettings {
-  main_domain: string;
-  support_email: string;
   admin_email: string;
   copyright_text: string;
   terms_content: string;
@@ -16,12 +14,9 @@ interface SystemSettings {
 }
 
 export default function AdminSettings() {
-  const { user } = useAuth()
+  const { user, isAdmin, isLoading: authLoading } = useAuth()
   const router = useRouter()
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
   const [settings, setSettings] = useState<SystemSettings>({
-    main_domain: "",
-    support_email: "",
     admin_email: "",
     copyright_text: "",
     terms_content: "",
@@ -29,57 +24,44 @@ export default function AdminSettings() {
   })
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [verifying, setVerifying] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const fetchAdminData = useCallback(async () => {
+    if (!isAdmin) return
     try {
       setLoading(true)
-      const [siteSettings, adminList] = await Promise.all([
-        domainService.getSettings(),
-        domainService.listAdmins()
-      ])
+      const siteSettings = await domainService.getSettings()
       
-      const email = user?.email
       const masterAdmin = siteSettings.admin_email || "info369skills@gmail.com"
       
-      const isHardcodedAdmin = email === "info369skills@gmail.com" || email === "abcd@artradering.com"
-      
-      if (isHardcodedAdmin || adminList.includes(email || "")) {
-        setIsAdmin(true)
-      } else {
-        setIsAdmin(false)
-        router.push("/")
-        return
-      }
-
       setSettings({
-        main_domain: siteSettings.main_domain || "",
-        support_email: siteSettings.support_email || "",
         admin_email: masterAdmin,
         copyright_text: siteSettings.copyright_text || "",
         terms_content: siteSettings.terms_content || "",
         safety_clause_content: siteSettings.safety_clause_content || ""
       })
     } catch (err: unknown) {
-      const error = err as Error;
-      console.error('Fetch settings failed:', error)
-      setError(error.message)
+      console.error('Fetch settings failed:', err)
+      setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
     }
-  }, [user, router, setIsAdmin])
+  }, [isAdmin])
 
   useEffect(() => {
-    if (!user) return
+    if (authLoading) return
+    if (!isAdmin) {
+      router.push("/")
+      return
+    }
     fetchAdminData()
-  }, [user, fetchAdminData])
+  }, [authLoading, isAdmin, router, fetchAdminData])
 
   const handleSaveSettings = async () => {
     try {
       setIsSaving(true)
       await Promise.all([
-        domainService.updateSetting("main_domain", settings.main_domain),
-        domainService.updateSetting("support_email", settings.support_email),
         domainService.updateSetting("admin_email", settings.admin_email),
         domainService.addAdmin(settings.admin_email),
         domainService.updateSetting("copyright_text", settings.copyright_text),
@@ -97,9 +79,17 @@ export default function AdminSettings() {
     }
   }
 
+  if (authLoading || isAdmin === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-12 h-12 text-[var(--color-brand-pink)] animate-spin" />
+      </div>
+    )
+  }
+
   if (isAdmin === false) return null
 
-  if (loading || (isAdmin === null && !error)) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-12 h-12 text-[var(--color-brand-pink)] animate-spin" />
@@ -122,22 +112,13 @@ export default function AdminSettings() {
       </div>
 
       <div className="glass-panel p-8 rounded-[40px] border border-white/10 space-y-8 max-w-4xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">Main System Domain</label>
-            <input 
-              type="text" 
-              value={settings.main_domain}
-              onChange={(e) => setSettings({...settings, main_domain: e.target.value})}
-              className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">Support Email</label>
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2">Master Admin Email</label>
             <input 
               type="email" 
-              value={settings.support_email}
-              onChange={(e) => setSettings({...settings, support_email: e.target.value})}
+              value={settings.admin_email}
+              onChange={(e) => setSettings({...settings, admin_email: e.target.value})}
               className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white"
             />
           </div>

@@ -16,9 +16,10 @@ export default function SafetyPage() {
   const fetchContent = async () => {
     try {
       const settings = await domainService.getSettings()
-      setContent(settings.safety_clause_content || 'Loading safety clause...')
+      setContent(settings.safety_clause_content || 'Quamify ka structure third-party providers (Vercel, Supabase, Cloudflare) par depend karta hai. In platforms ki policies, free-tier limits, ya uptime humare control mein nahi hain.')
     } catch (err) {
       console.error('Failed to fetch safety clause:', err)
+      setContent('Security and safety protocols are active. Details available upon system sync.')
     } finally {
       setLoading(false)
     }

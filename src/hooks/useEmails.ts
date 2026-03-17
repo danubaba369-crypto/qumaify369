@@ -8,14 +8,14 @@ export function useEmails(recipientAddress: string | null) {
   const [emails, setEmails] = useState<Email[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchEmails = useCallback(async () => {
+  const fetchEmails = useCallback(async (isMounted: boolean) => {
     if (!recipientAddress) {
-      setIsLoading(false);
+      if (isMounted) setIsLoading(false);
       return;
     }
 
     try {
-      setIsLoading(true);
+      if (isMounted) setIsLoading(true);
       const { data, error } = await supabase
         .from("emails")
         .select("*")
@@ -24,26 +24,25 @@ export function useEmails(recipientAddress: string | null) {
 
       if (error) throw error;
       
-      if (data) {
+      if (data && isMounted) {
         setEmails(data as Email[]);
       }
     } catch (err) {
-      // Use warn instead of error to prevent Next.js dev overlay from popping up continuously
-      // when the user hasn't created the 'emails' table yet.
-      console.warn("Supabase fetch warning (expected if table not created):", err);
+      console.warn("Supabase fetch warning:", err);
     } finally {
-      setIsLoading(false);
+      if (isMounted) setIsLoading(false);
     }
   }, [recipientAddress]);
 
   useEffect(() => {
-    fetchEmails();
+    let isMounted = true;
+    fetchEmails(isMounted);
 
     if (!recipientAddress) return;
 
     // Set up realtime subscription
     const channel = supabase
-      .channel("custom-insert-channel")
+      .channel(`emails-${recipientAddress}`)
       .on(
         "postgres_changes",
         {
@@ -52,17 +51,20 @@ export function useEmails(recipientAddress: string | null) {
           table: "emails",
           filter: `recipient_address=eq.${recipientAddress}`,
         },
-        (payload) => {
-          console.log("New email received:", payload.new);
-          setEmails((prev) => [payload.new as Email, ...prev]);
+        (payload: any) => {
+          if (isMounted) {
+            console.log("New email received:", payload.new);
+            setEmails((prev) => [payload.new as Email, ...prev]);
+          }
         }
       )
       .subscribe();
 
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
     };
   }, [recipientAddress, fetchEmails]);
 
-  return { emails, isLoading, refetch: fetchEmails };
+  return { emails, isLoading, refetch: () => fetchEmails(true) };
 }

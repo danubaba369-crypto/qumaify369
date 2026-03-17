@@ -16,9 +16,10 @@ export default function TermsPage() {
   const fetchContent = async () => {
     try {
       const settings = await domainService.getSettings()
-      setContent(settings.terms_content || 'Loading terms...')
+      setContent(settings.terms_content || 'By accessing and using Quamify Mail, you agree to be bound by these terms. This service provides temporary holographic email addresses for testing and privacy purposes.')
     } catch (err) {
       console.error('Failed to fetch terms:', err)
+      setContent('Technical terms of service available upon infrastructure initialization.')
     } finally {
       setLoading(false)
     }

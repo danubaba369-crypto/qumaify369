@@ -61,9 +61,10 @@ export async function updateSession(request: NextRequest) {
   const isLoginPath = request.nextUrl.pathname.startsWith('/login')
   const isAuthPath = request.nextUrl.pathname.startsWith('/auth')
   const isHomePath = request.nextUrl.pathname === '/'
+  const isIngestPath = request.nextUrl.pathname.startsWith('/api/ingest')
 
   // 1. If NO user and trying to access protected routes, redirect to login
-  if (!user && !isLoginPath && !isAuthPath && !isHomePath) {
+  if (!user && !isLoginPath && !isAuthPath && !isHomePath && !isIngestPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     

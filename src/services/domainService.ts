@@ -7,50 +7,37 @@ export interface DomainRecord {
   is_verified: boolean
   verification_token: string
   created_at: string
+  cloudflare_zone_id?: string
+  cloudflare_nameservers?: string[]
+  cloudflare_status?: string
 }
 
 export const domainService = {
   async addDomain(domainName: string) {
-    // Clean domain name: remove https://, http://, and trailing slashes
-    const cleanDomain = domainName
-      .toLowerCase()
-      .replace(/^https?:\/\//, '')
-      .replace(/\/$/, '')
-      .split('/')[0] // handle potential paths
+    const response = await fetch('/api/domains/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domainName }),
+    })
 
-    const verificationToken = `quamify-verify-${Math.random().toString(36).substring(2, 15)}`
-    const { data: { session } } = await supabase.auth.getSession()
-    const user = session?.user
-    
-    if (!user) {
-      console.error('AddDomain Error: No active session found')
-      throw new Error('You must be logged in to add a domain')
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to setup domain')
     }
 
-    const { data, error } = await supabase
-      .from('user_domains')
-      .insert([
-        { 
-          domain_name: cleanDomain, 
-          verification_token: verificationToken,
-          user_id: user.id // Explicit passing to satisfy RLS WITH CHECK
-        }
-      ])
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase Insertion Error:', error)
-      throw error
-    }
-    return data as DomainRecord
+    return await response.json()
   },
 
   async getSettings() {
-    const { data } = await supabase.from('site_settings').select('*')
-    const settings: Record<string, string> = {}
-    data?.forEach(s => settings[s.key] = s.value)
-    return settings
+    try {
+      const { data } = await supabase.from('site_settings').select('*')
+      const settings: Record<string, string> = {}
+      data?.forEach((s: any) => settings[s.key] = s.value)
+      return settings
+    } catch (e) {
+      console.error('getSettings failed:', e)
+      return {}
+    }
   },
 
   async updateSetting(key: string, value: string) {
@@ -71,43 +58,57 @@ export const domainService = {
   },
 
   async listAdmins() {
-    const { data } = await supabase.from('admins').select('email')
-    return data?.map(a => a.email) || []
+    try {
+      const { data } = await supabase.from('admins').select('email')
+      return data?.map((a: any) => a.email) || []
+    } catch (e) {
+      console.error('listAdmins failed:', e)
+      return []
+    }
   },
 
   async getStats() {
-    
-    // Get total domains count
-    const { count: domainsCount } = await supabase
-      .from('user_domains')
-      .select('*', { count: 'exact', head: true })
+    try {
+      // Get total domains count
+      const { count: domainsCount } = await supabase
+        .from('user_domains')
+        .select('*', { count: 'exact', head: true })
 
-    // Get total verified domains
-    const { count: verifiedCount } = await supabase
-      .from('user_domains')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_verified', true)
+      // Get total verified domains
+      const { count: verifiedCount } = await supabase
+        .from('user_domains')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_verified', true)
 
-    // Get total emails processed
-    const { count: emailsCount } = await supabase
-      .from('emails')
-      .select('*', { count: 'exact', head: true })
+      // Get total emails processed
+      const { count: emailsCount } = await supabase
+        .from('emails')
+        .select('*', { count: 'exact', head: true })
 
-    return {
-      totalDomains: domainsCount || 0,
-      activeDomains: verifiedCount || 0,
-      totalEmails: emailsCount || 0
+      return {
+        totalDomains: domainsCount || 0,
+        activeDomains: verifiedCount || 0,
+        totalEmails: emailsCount || 0
+      }
+    } catch (e) {
+      console.error('getStats failed:', e)
+      return { totalDomains: 0, activeDomains: 0, totalEmails: 0 }
     }
   },
 
   async listDomains() {
-    const { data, error } = await supabase
-      .from('user_domains')
-      .select('*')
-      .order('created_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('user_domains')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-    if (error) throw error
-    return data as DomainRecord[]
+      if (error) throw error
+      return (data as DomainRecord[]) || []
+    } catch (e) {
+      console.error('listDomains failed:', e)
+      return []
+    }
   },
 
   async deleteDomain(id: string) {
@@ -142,11 +143,11 @@ export const domainService = {
     return data
   },
 
-  async verifyCustomDomain(domainName: string, force: boolean = false) {
+  async verifyCustomDomain(domainName: string) {
     const response = await fetch('/api/domains/custom-verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain: domainName, force }),
+      body: JSON.stringify({ domain: domainName }),
     })
     if (!response.ok) {
       const error = await response.json()
@@ -155,11 +156,11 @@ export const domainService = {
     return await response.json()
   },
 
-  async verifyDomain(id: string, force: boolean = false) {
+  async verifyDomain(id: string) {
     const response = await fetch('/api/domains/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, force }),
+      body: JSON.stringify({ id }),
     })
 
     if (!response.ok) {

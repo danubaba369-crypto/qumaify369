@@ -27,11 +27,11 @@ function HeaderContent() {
   const isHome = pathname === "/";
 
   const navLinks = [
-    { href: "/", label: "Home", icon: Home, active: isHome },
+    { href: "/", label: "Home", icon: Home, active: pathname === "/" },
     { href: "/safety", label: "Safety", icon: ShieldCheck, active: pathname === "/safety" },
     { href: "/terms", label: "Terms", icon: FileText, active: pathname === "/terms" },
+    ...(user ? [{ href: "/domains", label: "Domains", icon: Globe, active: pathname === '/domains' }] : []),
     ...(isAdmin ? [
-      { href: "/admin/domains", label: "Domains", icon: Globe, active: pathname === '/admin/domains' },
       { href: "/admin/settings", label: "Settings", icon: Shield, active: pathname === '/admin/settings', isAdmin: true }
     ] : []),
   ];
@@ -54,7 +54,7 @@ function HeaderContent() {
             <Link 
               key={`${link.href}-${idx}`}
               href={link.href} 
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white/5 ${link.active ? 'text-white bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white/5 cursor-pointer ${link.active ? 'text-white bg-white/5' : 'text-gray-500 hover:text-gray-300'}`}
             >
               <link.icon className={`w-3.5 h-3.5 ${link.isAdmin ? 'text-red-500' : ''}`} />
               {link.label}
@@ -85,7 +85,7 @@ function HeaderContent() {
               </div>
               <button 
                 onClick={() => signOut()}
-                className="p-2 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+                className="p-2 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors cursor-pointer active:scale-90"
                 title="Sign Out"
               >
                 <LogOut className="w-5 h-5" />
@@ -94,7 +94,7 @@ function HeaderContent() {
           ) : (
             <Link 
               href="/login"
-              className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-white text-black text-xs sm:text-sm font-bold hover:bg-gray-100 transition-all active:scale-95"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-white text-black text-xs sm:text-sm font-bold hover:bg-gray-100 transition-all active:scale-95 cursor-pointer"
             >
               Login
             </Link>
@@ -103,7 +103,7 @@ function HeaderContent() {
           {/* Mobile Menu Button */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+            className="md:hidden p-2 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors cursor-pointer"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

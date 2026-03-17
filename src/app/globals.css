@@ -148,3 +148,8 @@ body {
   background: linear-gradient(to right, transparent, rgba(255, 18, 177, 0.1), transparent);
   animation: scanline 3s linear infinite;
 }
+
+/* Global Interactive cursor */
+button, a, input[type="button"], input[type="submit"], [role="button"], .cursor-pointer {
+  cursor: pointer !important;
+}

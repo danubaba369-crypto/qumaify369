@@ -45,37 +45,59 @@ export default function Home() {
 
   // Handle initial domain and address generation
   useEffect(() => {
+    let mounted = true;
+
     const init = async () => {
       try {
-        const settings = await domainService.getSettings();
-        const mainDomain = settings.main_domain || "artradering.com";
+        const platformDefault = "quamify-mail.com";
         
+        // Always show platform default initially
+        if (mounted && !selectedDomain) {
+           setSelectedDomain(platformDefault);
+        }
+
+        if (!user) {
+          if (mounted) setSelectedDomain(platformDefault);
+          return;
+        }
+
+        const domains = await domainService.listDomains();
+        const verified = domains.filter(d => d.is_verified);
+        if (mounted) setVerifiedDomains(verified);
+
         const forceNew = sessionStorage.getItem("forceNewQuamifyEmail");
         const storedAddress = localStorage.getItem("quamify_active_email");
         
+        // Use the first verified domain as preference, fallback to platform default
+        const defaultDomain = verified.length > 0 ? verified[0].domain_name : platformDefault;
+
         if (forceNew === "true" || !storedAddress || !storedAddress.includes("@")) {
           const newPrefix = generateRandomString(10);
           setPrefix(newPrefix);
-          setSelectedDomain(mainDomain);
-          localStorage.setItem("quamify_active_email", `${newPrefix}@${mainDomain}`);
+          setSelectedDomain(defaultDomain);
+          localStorage.setItem("quamify_active_email", `${newPrefix}@${defaultDomain}`);
           sessionStorage.removeItem("forceNewQuamifyEmail");
           setIsAuto(true);
         } else {
           const [storedPrefix, storedDomain] = storedAddress.split("@");
           setPrefix(storedPrefix);
-          setSelectedDomain(storedDomain || mainDomain);
+          // Check if stored domain is still valid (platform default is always valid)
+          const isStillValid = storedDomain === platformDefault || verified.some(v => v.domain_name === storedDomain);
+          setSelectedDomain(isStillValid ? (storedDomain || defaultDomain) : defaultDomain);
           setIsAuto(false);
         }
-        // Fetch verified domains after init
-        await fetchDomains();
       } catch (err) {
         console.error("Domain Init Error:", err);
-        setSelectedDomain("artradering.com");
+        if (mounted) setSelectedDomain("quamify-mail.com");
       }
     };
     
     init();
-  }, [fetchDomains]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [user]); 
 
   // Derive address from prefix and domain
   const address = (prefix && selectedDomain && selectedDomain !== "Loading...") 
@@ -132,6 +154,7 @@ export default function Home() {
           selectedDomain={selectedDomain}
           verifiedDomains={verifiedDomains}
           onDomainChange={handleDomainChange}
+          onSimulate={simulateEmail}
         />
       </div>
 
@@ -189,15 +212,6 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* DEV TOOLS */}
-      <button 
-        onClick={simulateEmail}
-        className="fixed bottom-6 right-6 flex items-center gap-2 bg-black/60 hover:bg-black/90 text-[10px] px-4 py-2 text-gray-500 rounded-full border border-white/10 backdrop-blur-md transition-all z-50 uppercase tracking-widest font-black"
-      >
-        <RefreshCw className="w-3 h-3" />
-        Simulate Transmission
-      </button>
     </div>
   );
 }

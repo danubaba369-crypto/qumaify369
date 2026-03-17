@@ -14,6 +14,7 @@ interface HeroAddressProps {
   selectedDomain: string;
   verifiedDomains: DomainRecord[];
   onDomainChange: (val: string) => void;
+  onSimulate?: () => void;
 }
 
 export default function HeroAddress({ 
@@ -24,7 +25,8 @@ export default function HeroAddress({
   isAuto,
   selectedDomain,
   verifiedDomains,
-  onDomainChange
+  onDomainChange,
+  onSimulate
 }: HeroAddressProps) {
   const [copied, setCopied] = useState(false);
 
@@ -76,12 +78,17 @@ export default function HeroAddress({
                   3. OR it's a domain we want to show anyway (like the one currently in use)
                 */}
                 
+                {/* Platform Default */}
+                {selectedDomain !== "quamify-mail.com" && (
+                   <option value="quamify-mail.com" className="bg-[#050505]">quamify-mail.com</option>
+                )}
+
                 {/* System Default / Currently Active */}
                 <option value={selectedDomain} className="bg-[#050505]">{selectedDomain}</option>
                 
                 {/* List other uniquely verified domains */}
                 {verifiedDomains
-                  .filter(d => d.domain_name !== selectedDomain)
+                  .filter(d => d.domain_name !== selectedDomain && d.domain_name !== "quamify-mail.com")
                   .map(d => (
                     <option key={d.id} value={d.domain_name} className="bg-[#050505]">{d.domain_name}</option>
                   ))}
@@ -113,6 +120,16 @@ export default function HeroAddress({
                 {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                 {copied ? "Copied" : "Copy Address"}
               </button>
+
+              {onSimulate && (
+                <button
+                  onClick={onSimulate}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-4 sm:py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 border border-blue-500/20 transition-all active:scale-95 group/sim"
+                >
+                  <Zap className="w-4 h-4 group-hover/sim:scale-125 transition-transform" />
+                  Simulate
+                </button>
+              )}
             </div>
           </div>
           

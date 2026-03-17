@@ -59,9 +59,19 @@ export default function DomainSetupInstructions({ domainName, verificationToken 
                 <td className="py-4 text-right">
                   <button
                     onClick={() => copyToClipboard(record.value, i.toString())}
-                    className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all text-xs font-bold uppercase tracking-wider cursor-pointer group/copy"
                   >
-                    {copied === i.toString() ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                    {copied === i.toString() ? (
+                      <>
+                        <span className="text-green-400">Copied!</span>
+                        <Check className="w-4 h-4 text-green-400" />
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-gray-500 group-hover/copy:text-gray-300 transition-colors">Copy</span>
+                        <Copy className="w-4 h-4 text-gray-400 group-hover/copy:text-white transition-colors" />
+                      </>
+                    )}
                   </button>
                 </td>
               </tr>

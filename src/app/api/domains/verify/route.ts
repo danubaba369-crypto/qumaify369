@@ -1,48 +1,64 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import dns from 'dns/promises'
+import { cloudflare } from '@/lib/cloudflare'
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const { id, force } = await request.json()
-
-  // 1. Fetch domain details
-  const { data: domain, error: fetchError } = await supabase
-    .from('user_domains')
-    .select('*')
-    .eq('id', id)
-    .single()
-
-  if (fetchError || !domain) {
-    return NextResponse.json({ message: 'Domain not found' }, { status: 404 })
-  }
-
-  if (domain.is_verified) {
-    return NextResponse.json({ message: 'Domain already verified', verified: true })
-  }
-
-  // 1.5 Bypass if forced (for local dev)
-  if (force) {
-    const { error: updateError } = await supabase
-      .from('user_domains')
-      .update({ is_verified: true, verified_at: new Date().toISOString() })
-      .eq('id', id)
-
-    if (updateError) throw updateError
-    return NextResponse.json({ message: 'Domain force-verified (Dev Mode)', verified: true })
-  }
-
   try {
-    // 2. Perform DNS TXT lookup
-    // In a real environment, we check for the verification token
-    const cleanDomain = domain.domain_name
-      .replace(/^https?:\/\//, '')
-      .replace(/\/$/, '')
+    const supabase = await createClient()
+    const { id } = await request.json()
 
-    const txtRecords = await dns.resolveTxt(cleanDomain)
-    const flattenedRecords = txtRecords.flat()
-    
-    const isVerified = flattenedRecords.includes(domain.verification_token)
+    // 1. Fetch domain details
+    const { data: domain, error: fetchError } = await supabase
+      .from('user_domains')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !domain) {
+      return NextResponse.json({ message: 'Domain not found' }, { status: 404 })
+    }
+
+    if (domain.is_verified) {
+      return NextResponse.json({ message: 'Domain already verified', verified: true })
+    }
+
+    // 2. Perform Cloudflare Check if it's a Cloudflare-managed domain
+    const isCloudflareDomain = !!domain.cloudflare_zone_id;
+    let isVerified = false;
+
+    if (isCloudflareDomain) {
+      const zone = await cloudflare.getZone(domain.cloudflare_zone_id);
+      
+      if (zone.status === 'active') {
+        isVerified = true;
+        // Automatically setup Email Routing if not already done
+        if (domain.cloudflare_status !== 'active') {
+          try {
+            await cloudflare.setupEmailRouting(zone.id, process.env.CLOUDFLARE_WORKER_NAME!);
+            await supabase
+              .from('user_domains')
+              .update({ cloudflare_status: 'active' })
+              .eq('id', id);
+          } catch (e) {
+            console.error('Cloudflare Routing Setup failed:', e);
+          }
+        }
+      }
+    } else {
+      // Legacy TXT record verification
+      const cleanDomain = domain.domain_name
+        .replace(/^https?:\/\//, '')
+        .replace(/\/$/, '')
+
+      try {
+        const txtRecords = await dns.resolveTxt(cleanDomain)
+        const flattenedRecords = txtRecords.flat()
+        isVerified = flattenedRecords.includes(domain.verification_token)
+      } catch (dnsError) {
+        console.error('DNS Lookup failed:', dnsError);
+      }
+    }
 
     if (isVerified) {
       // 3. Update database
@@ -53,10 +69,14 @@ export async function POST(request: Request) {
 
       if (updateError) throw updateError
 
-      return NextResponse.json({ message: 'Domain verified successfully!', verified: true })
+      return NextResponse.json({ message: 'Domain verified successfully! Email routing is being configured.', verified: true })
     } else {
+      const message = isCloudflareDomain 
+        ? 'Cloudflare nameservers not yet active. Please ensure you have updated the nameservers at your registrar and wait a few minutes.'
+        : 'Verification token not found in DNS records. Please check your setup and try again.';
+        
       return NextResponse.json({ 
-        message: 'Verification token not found in DNS records. Please check your setup and try again.', 
+        message, 
         verified: false 
       }, { status: 400 })
     }
