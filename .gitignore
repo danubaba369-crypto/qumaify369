@@ -1,17 +1,28 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# New Decoupled Structure
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
+# Original/Root (for safety)
+.next/
+node_modules/
+.env.local
+.DS_Store
+*.log
 !.yarn/releases
 !.yarn/versions
 
 # testing
 /coverage
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
 
 # next.js
 /.next/
