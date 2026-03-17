@@ -35,15 +35,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const checkAdminStatus = async (userEmail: string | undefined) => {
       if (!userEmail) return false;
-      const isHardcodedAdmin = userEmail === 'info369skills@gmail.com' || userEmail === 'danubaba369@gmail.com' || userEmail === 'abcd@artradering.com'
-      if (isHardcodedAdmin) return true;
       
       try {
+        const settings = await domainService.getSettings()
+        const masterAdmin = settings.admin_email || 'info369skills@gmail.com'
+        
+        // Check master admin or developer backup
+        if (userEmail === masterAdmin || userEmail === 'info369skills@gmail.com' || userEmail === 'danubaba369@gmail.com') {
+          return true;
+        }
+        
         const adminList = await domainService.listAdmins()
         return adminList.includes(userEmail)
       } catch (e) {
         console.error('Admin check failed:', e)
-        return isHardcodedAdmin;
+        return userEmail === 'info369skills@gmail.com';
       }
     };
 

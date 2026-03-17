@@ -286,14 +286,40 @@ export default function UserDomains() {
                   <div className="relative z-10">
                     <h4 className="text-lg font-bold text-white tracking-tight">{domain.domain_name}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className={`w-1.5 h-1.5 rounded-full ${domain.is_verified ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                      <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
-                        {domain.is_verified ? 'Live / Active' : 'Pending Verification'}
-                      </p>
+                      {domain.admin_approval === 'pending' ? (
+                        <>
+                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                          <p className="text-[10px] text-orange-500 font-black uppercase tracking-widest">
+                            Pending Admin Approval
+                          </p>
+                        </>
+                      ) : domain.admin_approval === 'rejected' ? (
+                        <>
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          <p className="text-[10px] text-red-500 font-black uppercase tracking-widest">
+                            Request Rejected
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className={`w-1.5 h-1.5 rounded-full ${domain.is_verified ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                          <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">
+                            {domain.is_verified ? 'Live / Active' : 'Pending Verification'}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 relative z-10">
-                    {!domain.is_verified ? (
+                    {domain.admin_approval === 'pending' ? (
+                      <span className="px-4 py-2 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-500 text-[10px] font-bold uppercase tracking-widest">
+                        Awaiting Admin
+                      </span>
+                    ) : domain.admin_approval === 'rejected' ? (
+                      <span className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold uppercase tracking-widest">
+                        Denied
+                      </span>
+                    ) : !domain.is_verified ? (
                        <button 
                         onClick={() => handleVerifyDomain(domain.id, domain.domain_name)}
                         disabled={verifying === domain.id}

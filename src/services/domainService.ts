@@ -10,6 +10,7 @@ export interface DomainRecord {
   cloudflare_zone_id?: string
   cloudflare_nameservers?: string[]
   cloudflare_status?: string
+  admin_approval: 'pending' | 'approved' | 'rejected'
 }
 
 export const domainService = {
@@ -169,5 +170,47 @@ export const domainService = {
     }
 
     return await response.json()
+  },
+
+  async approveDomain(id: string) {
+    const response = await fetch('/api/admin/domains/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to approve domain')
+    }
+
+    return await response.json()
+  },
+
+  async rejectDomain(id: string) {
+    const response = await fetch('/api/admin/domains/reject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to reject domain')
+    }
+
+    return await response.json()
+  },
+
+  async listPendingDomains() {
+    // We can still use supabase direct fetch if RLS allows admins to see all
+    const { data, error } = await supabase
+      .from('user_domains')
+      .select('*, user_id') 
+      .eq('admin_approval', 'pending')
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    return data as DomainRecord[]
   }
 }

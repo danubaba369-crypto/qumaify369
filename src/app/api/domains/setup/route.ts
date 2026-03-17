@@ -27,6 +27,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // 2. Check site settings for auto-approval
+    const { data: autoApproveSetting } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'auto_approve_domains')
+      .single();
+    
+    const isAutoApprove = autoApproveSetting?.value === 'true';
+
     // 1. Clean domain name
     const cleanDomain = domainName
       .toLowerCase()
@@ -37,7 +46,35 @@ export async function POST(request: Request) {
     // 2. Generate Verification Token
     const verificationToken = `quamify-verify-${Math.random().toString(36).substring(2, 15)}`;
 
-    // 3. Create Zone in Cloudflare
+    if (!isAutoApprove) {
+      // Manual approval mode: Just insert the domain as pending
+      const { data: domain, error: insertError } = await supabase
+        .from('user_domains')
+        .insert([
+          {
+            domain_name: cleanDomain,
+            verification_token: verificationToken,
+            user_id: session.user.id,
+            admin_approval: 'pending',
+            cloudflare_status: 'pending'
+          }
+        ])
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Supabase Insert Error (Pending):', insertError);
+        return NextResponse.json({ message: insertError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Domain submitted for admin approval.',
+        domain
+      });
+    }
+
+    // 3. Create Zone in Cloudflare (Auto-approval flow)
     let zone;
     try {
       zone = await cloudflare.createZone(cleanDomain);
@@ -56,7 +93,8 @@ export async function POST(request: Request) {
           user_id: session.user.id,
           cloudflare_zone_id: zone.id,
           cloudflare_nameservers: zone.name_servers,
-          cloudflare_status: 'pending'
+          cloudflare_status: 'pending',
+          admin_approval: 'approved'
         }
       ])
       .select()
