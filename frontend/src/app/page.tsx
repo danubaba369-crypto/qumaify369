@@ -26,7 +26,7 @@ export default function Home() {
   const [prefix, setPrefix] = useState<string>("");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [verifiedDomains, setVerifiedDomains] = useState<DomainRecord[]>([]);
-  const [selectedDomain, setSelectedDomain] = useState<string>("artradering.com");
+  const [selectedDomain, setSelectedDomain] = useState<string>("Loading...");
   const [isAuto, setIsAuto] = useState(true);
 
   const fetchDomains = useCallback(async () => {
