@@ -1,5 +1,6 @@
 "use client";
 
+
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { type User, type Session } from '@supabase/supabase-js'
@@ -84,6 +85,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (!mounted) return
 
+      if (event === 'SIGNED_OUT') {
+        setSession(null)
+        setUser(null)
+        setIsAdmin(false)
+        setIsLoading(false)
+        return
+      }
+
       setSession(currentSession)
       setUser(currentSession?.user ?? null)
 
@@ -107,10 +116,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true)
       await supabase.auth.signOut()
-      // Clear data but stay on home page
-      window.location.href = '/'
+      // Force a full browser reload to clear all stale memory
+      window.location.href = '/login'
     } catch (err) {
-      window.location.href = '/'
+      window.location.href = '/login'
     }
   }
 

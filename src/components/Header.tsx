@@ -13,6 +13,12 @@ function HeaderContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
 
   // Auto-refresh when auth succeeds to sync state
   useEffect(() => {
@@ -77,27 +83,29 @@ function HeaderContent() {
               <span className="text-[10px] text-gray-400 font-mono">AES-256</span>
             </div>
           </div>
-          {user ? (
-            <div className="flex items-center gap-2 sm:gap-4 sm:pl-4 sm:border-l border-white/10">
-              <div className="flex flex-col items-end hidden lg:flex">
-                <span className="text-xs text-white font-medium truncate max-w-[150px]">{user.email}</span>
-                <span className="text-[10px] text-[var(--color-brand-gold)]">Premium Plan</span>
+          {mounted && (
+            user ? (
+              <div className="flex items-center gap-2 sm:gap-4 sm:pl-4 sm:border-l border-white/10">
+                <div className="flex flex-col items-end hidden lg:flex">
+                  <span className="text-xs text-white font-medium truncate max-w-[150px]">{user.email}</span>
+                  <span className="text-[10px] text-[var(--color-brand-gold)]">Premium Plan</span>
+                </div>
+                <button 
+                  onClick={() => signOut()}
+                  className="p-2 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors cursor-pointer active:scale-90"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
               </div>
-              <button 
-                onClick={() => signOut()}
-                className="p-2 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors cursor-pointer active:scale-90"
-                title="Sign Out"
+            ) : (
+              <Link 
+                href="/login"
+                className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-white text-black text-xs sm:text-sm font-bold hover:bg-gray-100 transition-all active:scale-95 cursor-pointer"
               >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          ) : (
-            <Link 
-              href="/login"
-              className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-white text-black text-xs sm:text-sm font-bold hover:bg-gray-100 transition-all active:scale-95 cursor-pointer"
-            >
-              Login
-            </Link>
+                Login
+              </Link>
+            )
           )}
 
           {/* Mobile Menu Button */}
